@@ -36,7 +36,6 @@ app.get('api/getpPwd', async (req: any, res) => {
 });
 
 app.get('/', async (req, res) => {
-  //res.send('hello world');
   const test = await Test.findAll();
   console.log(test);
   if (test) {
