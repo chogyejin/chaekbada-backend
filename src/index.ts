@@ -29,7 +29,7 @@ client.connect();
 initSequelize();
 
 app.get('/user/1', async (req: any, res) => {
-  console.log('get password');
+  console.log('user');
   //const { name }: { name: string } = req.query;
   //const user = await Users.findOne({ where: { name } });
   //console.log(user);
