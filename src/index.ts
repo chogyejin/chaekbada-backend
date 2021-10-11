@@ -1,11 +1,18 @@
 import express from 'express';
-import { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT } from './constant';
+import {
+  SERVER_PORT,
+  DB_HOST,
+  DB_USER,
+  DB_PASSWORD,
+  DB_NAME,
+  DB_PORT,
+} from './constant';
 import { Users } from './sequelize/types/user';
 import { Test } from './sequelize/types/test';
 import { initSequelize } from './sequelize/index';
 
 const app = express();
-const port = 3000;
+const port = SERVER_PORT;
 
 const { Client } = require('pg');
 

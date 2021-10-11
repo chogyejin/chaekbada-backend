@@ -1,4 +1,4 @@
-const SERVER_PORT = 3000;
+const SERVER_PORT = 4000;
 
 const DB_PORT = 5432;
 const DB_HOST = '127.0.0.1';
