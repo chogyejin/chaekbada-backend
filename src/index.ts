@@ -21,26 +21,26 @@ client.connect();
 
 initSequelize();
 
-app.get('api/getpPwd', async (req: any, res) => {
+app.get('/user/1', async (req: any, res) => {
   console.log('get password');
-  const { name }: { name: string } = req.query;
-  const user = await Users.findOne({ where: { name } });
-  console.log(user);
-  if (!user) {
-    return res
-      .status(403)
-      .send(new Error('입력하신 정보가 존재하지 않습니다.'));
-  } else {
-    return res.send({ password: user });
+  //const { name }: { name: string } = req.query;
+  //const user = await Users.findOne({ where: { name } });
+  //console.log(user);
+  const test = await Test.findAll();
+  //console.log(test);
+  if (test) {
+    console.log(test);
+    return res.send({ test: test });
   }
 });
 
 app.get('/', async (req, res) => {
-  const test = await Test.findAll();
-  console.log(test);
-  if (test) {
-    return res.send({ test: test });
-  }
+  //const test = await Test.findAll();
+  //console.log(test);
+  //if (test) {
+  //  return res.send({ test: test });
+  //}
+  res.send('hello');
 });
 
 app.listen(port, () => {
