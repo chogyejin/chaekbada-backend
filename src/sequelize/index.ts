@@ -1,5 +1,6 @@
 import { Sequelize, DataTypes } from 'sequelize';
 import { User } from './types/user';
+import { University } from './types/university';
 import { DB_USER, DB_PASSWORD, DB_PORT, DB_NAME, DB_HOST } from '../constant';
 
 const initSequelize = () => {
@@ -53,6 +54,30 @@ const initSequelize = () => {
       sequelize, // passing the `sequelize` instance is required
     },
   );
+
+  University.init(
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
+        primaryKey: true,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+    },
+    {
+      tableName: 'University',
+      sequelize,
+    },
+  );
+
+  User.belongsTo(University, {
+    foreignKey: 'universityID',
+    as: 'university',
+  });
 };
 
 export { initSequelize };
