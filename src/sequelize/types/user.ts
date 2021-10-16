@@ -1,36 +1,37 @@
 import { Model, Optional } from 'sequelize';
 
 interface UsersAttributes {
-  id: string | null;
-  email: string | null;
-  password: string | null;
-  name: string | null;
-  address: string | null;
-  zipCode: string | null;
-  school: string | null;
-  phoneNumber: string | null;
-  birthDate: Date | null;
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  universityID: string;
+  address: string;
+  point: number;
+  biddingPoint: number;
+  profileImageUrl: string;
 }
 
 interface UsersCreationAttributes extends Optional<UsersAttributes, 'id'> {}
 
-class Users
+class User
   extends Model<UsersAttributes, UsersCreationAttributes>
   implements UsersAttributes
 {
-  public id!: string | null; // Note that the `null assertion` `!` is required in strict mode.
-  public email!: string | null;
-  public password!: string | null;
-  public name!: string | null;
-  public address!: string | null;
-  public zipCode!: string | null;
-  public school!: string | null;
-  public phoneNumber!: string | null;
-  public birthDate!: Date | null;
+  public id!: string;
+  public email!: string;
+  public password!: string;
+  public name!: string;
+  public universityID!: string;
+  public address!: string;
+  public point!: number;
+  public biddingPoint!: number;
+  public profileImageUrl!: string;
 
   // timestamps!
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+  public readonly deletedAt!: Date;
 }
 
-export { UsersAttributes, Users };
+export { UsersAttributes, User };

@@ -7,8 +7,7 @@ import {
   DB_NAME,
   DB_PORT,
 } from './constant';
-import { Users } from './sequelize/types/user';
-import { Test } from './sequelize/types/test';
+import { User } from './sequelize/types/user';
 import { initSequelize } from './sequelize/index';
 
 const app = express();
@@ -30,11 +29,11 @@ initSequelize();
 
 app.get('/user/1', async (req: any, res) => {
   console.log('user');
-  //const { name }: { name: string } = req.query;
-  //const user = await Users.findOne({ where: { name } });
-  //console.log(user);
-  const test = await Test.findAll();
-  //console.log(test);
+  const { name }: { name: string } = req.query;
+  const user = await User.findOne({ where: { name } });
+  console.log(user);
+  const test = await User.findAll();
+  console.log(test);
   if (test) {
     console.log(test);
     return res.send({ test: test });

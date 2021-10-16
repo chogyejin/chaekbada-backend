@@ -1,6 +1,5 @@
 import { Sequelize, DataTypes } from 'sequelize';
-import { Users } from './types/user';
-import { Test } from './types/test';
+import { User } from './types/user';
 import { DB_USER, DB_PASSWORD, DB_PORT, DB_NAME, DB_HOST } from '../constant';
 
 const initSequelize = () => {
@@ -8,7 +7,7 @@ const initSequelize = () => {
     `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`,
   );
 
-  Users.init(
+  User.init(
     {
       id: {
         type: DataTypes.UUID,
@@ -28,47 +27,29 @@ const initSequelize = () => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      universityID: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       address: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      zipCode: {
-        type: DataTypes.STRING,
+      point: {
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
-      school: {
-        type: DataTypes.STRING,
+      biddingPoint: {
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
-      phoneNumber: {
+      profileImageUrl: {
         type: DataTypes.STRING,
-        allowNull: false,
-      },
-      birthDate: {
-        type: DataTypes.DATEONLY,
         allowNull: false,
       },
     },
     {
-      tableName: 'Users',
-      sequelize, // passing the `sequelize` instance is required
-    },
-  );
-
-  Test.init(
-    {
-      password: {
-        type: new DataTypes.STRING(),
-        allowNull: false,
-      },
-      name: {
-        type: new DataTypes.STRING(),
-        allowNull: false,
-        primaryKey: true,
-      },
-    },
-    {
-      tableName: 'test',
+      tableName: 'User',
       sequelize, // passing the `sequelize` instance is required
     },
   );
