@@ -8,6 +8,7 @@ import {
   DB_PORT,
 } from './constant';
 import { User } from './sequelize/types/user';
+import { University } from './sequelize/types/university';
 import { initSequelize } from './sequelize/index';
 
 const app = express();
