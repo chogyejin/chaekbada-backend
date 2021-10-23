@@ -13,7 +13,7 @@ import { initSequelize } from './sequelize/index';
 
 const app = express();
 const port = SERVER_PORT;
-
+const bcrypt = require('bcrypt');
 const { Client } = require('pg');
 
 const client = new Client({
@@ -28,25 +28,77 @@ client.connect();
 
 initSequelize();
 
-app.get('/user/1', async (req: any, res) => {
-  console.log('user');
-  const { name }: { name: string } = req.query;
-  const user = await User.findOne({ where: { name } });
-  console.log(user);
-  const test = await User.findAll();
-  console.log(test);
-  if (test) {
-    console.log(test);
-    return res.send({ test: test });
+app.post('/signUp', async (req: any, res) => {
+  console.log('회원가입 api');
+  const {
+    email,
+    password,
+    name,
+    address,
+    universityID,
+    point,
+    biddingPoint,
+    profileImageUrl,
+    isAuth,
+  }: {
+    email: string;
+    password: string;
+    name: string;
+    address: string;
+    universityID: string;
+    point: number;
+    biddingPoint: number;
+    profileImageUrl: string;
+    isAuth: boolean;
+  } = req.query;
+
+  const saltRounds = 11;
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const hashedPassword = bcrypt.hashSync(password, salt);
+
+  const user = await User.create({
+    email,
+    password: hashedPassword,
+    name,
+    address,
+    universityID,
+    point,
+    biddingPoint,
+    profileImageUrl,
+    isAuth,
+  });
+  user.isAuth = false;
+  res.send(user);
+});
+
+app.get('/signUp/email-check', async (req: any, res) => {
+  console.log('email 중복체크 api');
+  const { email }: { email: string } = req.query;
+  const user = await User.findOne({ where: { email } });
+
+  if (user) {
+    return res.send(false);
   }
+  return res.send(true);
+});
+
+app.get('/signIn', async (req: any, res) => {
+  console.log('로그인 api');
+  const { email, password }: { email: string; password: string } = req.query;
+  const user = await User.findOne({ where: { email } });
+
+  if (user) {
+    const isMatch = await bcrypt.compare(password, user!.password);
+    if (!isMatch) {
+      return res.status(403).send(new Error('비밀번호가 틀렸습니다.'));
+    }
+  } else {
+    return res.status(403).send(new Error('등록되지 않은 이메일입니다.'));
+  }
+  return res.send({ user: user });
 });
 
 app.get('/', async (req, res) => {
-  //const test = await Test.findAll();
-  //console.log(test);
-  //if (test) {
-  //  return res.send({ test: test });
-  //}
   res.send('hello');
 });
 
