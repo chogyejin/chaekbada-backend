@@ -7,6 +7,7 @@ import { Book } from './types/book';
 import { SolutionPost } from './types/solutionpost';
 import { SolutionPostReply } from './types/solutionpostreply';
 import { InterestedPosts } from './types/interestedposts';
+import { Auth } from './types/auth';
 import { DB_USER, DB_PASSWORD, DB_PORT, DB_NAME, DB_HOST } from '../constant';
 
 const initSequelize = () => {
@@ -298,6 +299,37 @@ const initSequelize = () => {
     },
     {
       tableName: 'InterestedPosts',
+      sequelize,
+    },
+  );
+
+  Auth.init(
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
+        primaryKey: true,
+      },
+      isAuth: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+      },
+      userID: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      verificationCode: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      expirationTime: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+    },
+    {
+      tableName: 'Auth',
       sequelize,
     },
   );
