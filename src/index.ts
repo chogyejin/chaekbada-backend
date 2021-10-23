@@ -10,6 +10,7 @@ import {
 import { User } from './sequelize/types/user';
 import { University } from './sequelize/types/university';
 import { initSequelize } from './sequelize/index';
+require('dotenv').config();
 
 const app = express();
 const port = SERVER_PORT;
@@ -52,4 +53,5 @@ app.get('/', async (req, res) => {
 
 app.listen(port, () => {
   console.log('backend server listen');
+  console.log(process.env.NODE_ENV);
 });
