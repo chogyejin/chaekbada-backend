@@ -55,6 +55,10 @@ const initSequelize = () => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      isAuth: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+      },
     },
     {
       tableName: 'User',

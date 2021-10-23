@@ -10,6 +10,7 @@ interface UsersAttributes {
   point: number;
   biddingPoint: number;
   profileImageUrl: string;
+  isAuth: boolean;
 }
 
 interface UsersCreationAttributes extends Optional<UsersAttributes, 'id'> {}
@@ -27,6 +28,7 @@ class User
   public point!: number;
   public biddingPoint!: number;
   public profileImageUrl!: string;
+  public isAuth!: boolean;
 
   // timestamps!
   public readonly createdAt!: Date;
