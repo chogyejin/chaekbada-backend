@@ -7,10 +7,12 @@ import {
   DB_NAME,
   DB_PORT,
 } from './constant';
+
 import { User } from './sequelize/types/user';
-import { University } from './sequelize/types/university';
 import { initSequelize } from './sequelize/index';
 require('dotenv').config();
+
+const tokenRouter = require('./routes/token.ts');
 
 const app = express();
 const port = SERVER_PORT;
@@ -53,5 +55,9 @@ app.get('/', async (req, res) => {
 
 app.listen(port, () => {
   console.log('backend server listen');
-  console.log(process.env.NODE_ENV);
+  console.log(process.env.JWT_SECRET);
 });
+
+app.use('/token', tokenRouter);
+// app.use(verifyToken());
+//app.use(빈칸?) 모든 api 요청에 대해 오른쪽 함수를 실행하는
