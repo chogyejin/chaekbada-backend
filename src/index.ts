@@ -7,16 +7,13 @@ import {
   DB_NAME,
   DB_PORT,
 } from './constant';
-
 import { User } from './sequelize/types/user';
 import { initSequelize } from './sequelize/index';
-require('dotenv').config();
-
-const tokenRouter = require('./routes/token.ts');
 
 const app = express();
 const port = SERVER_PORT;
-
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const { Client } = require('pg');
 
 const client = new Client({
@@ -31,33 +28,125 @@ client.connect();
 
 initSequelize();
 
-app.get('/user/1', async (req: any, res) => {
-  console.log('user');
-  const { name }: { name: string } = req.query;
-  const user = await User.findOne({ where: { name } });
-  console.log(user);
-  const test = await User.findAll();
-  console.log(test);
-  if (test) {
-    console.log(test);
-    return res.send({ test: test });
-  }
-});
-
 app.get('/', async (req, res) => {
-  //const test = await Test.findAll();
-  //console.log(test);
-  //if (test) {
-  //  return res.send({ test: test });
-  //}
   res.send('hello');
 });
 
 app.listen(port, () => {
   console.log('backend server listen');
-  console.log(process.env.JWT_SECRET);
 });
 
-app.use('/token', tokenRouter);
-// app.use(verifyToken());
-//app.use(빈칸?) 모든 api 요청에 대해 오른쪽 함수를 실행하는
+app.post('/signUp', async (req: any, res) => {
+  console.log('회원가입 api');
+  const {
+    email,
+    password,
+    name,
+    address,
+    universityID,
+    point,
+    biddingPoint,
+    profileImageUrl,
+    isAuth,
+  }: {
+    email: string;
+    password: string;
+    name: string;
+    address: string;
+    universityID: string;
+    point: number;
+    biddingPoint: number;
+    profileImageUrl: string;
+    isAuth: boolean;
+  } = req.query;
+
+  const saltRounds = 11;
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const hashedPassword = bcrypt.hashSync(password, salt);
+
+  const user = await User.create({
+    email,
+    password: hashedPassword,
+    name,
+    address,
+    universityID,
+    point,
+    biddingPoint,
+    profileImageUrl,
+    isAuth,
+  });
+  user.isAuth = false;
+  res.send(user);
+});
+
+app.get('/signUp/email-check', async (req: any, res) => {
+  console.log('email 중복체크 api');
+  const { email }: { email: string } = req.query;
+  const user = await User.findOne({ where: { email } });
+
+  if (user) {
+    return res.send('aaa');
+  }
+  return res.send('bbb');
+});
+
+app.get('/signIn', async (req: any, res) => {
+  console.log('로그인 api');
+  const { email, password }: { email: string; password: string } = req.query;
+  const user = await User.findOne({ where: { email } });
+
+  if (user) {
+    const isMatch = await bcrypt.compare(password, user!.password);
+    if (!isMatch) {
+      return res.status(403).send(new Error('비밀번호가 틀렸습니다.'));
+    }
+    try {
+      // jwt.sign(): 토큰 발급
+      const token = jwt.sign(
+        {
+          email,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: '10m', // 10분
+          issuer: '토큰 발급자',
+        },
+      );
+      return res.json({
+        code: 200,
+        message: '토큰이 발급되었습니다.',
+        token,
+        user: user,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        code: 500,
+        message: '서버 에러',
+      });
+    }
+  } else {
+    return res.status(403).send(new Error('등록되지 않은 이메일입니다.'));
+  }
+});
+
+app.use((req: any, res) => {
+  try {
+    // 요청 헤더에 저장된 토큰(req.headers.authorization)과 비밀키를 사용하여 토큰 반환
+    req.decoded = jwt.verify(req.headers.authorization, process.env.JWT_SECRET);
+    return res.send(true); // ??
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(419).json({
+        code: 419,
+        message: '토큰이 만료되었습니다.',
+      });
+    }
+
+    // 토큰의 비밀키가 일치하지 않는 경우
+    return res.status(401).json({
+      code: 401,
+      message: '유효하지 않은 토큰입니다.',
+    });
+  }
+});
