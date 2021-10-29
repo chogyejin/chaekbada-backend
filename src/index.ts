@@ -8,13 +8,13 @@ import {
   DB_PORT,
 } from './constant';
 import { User } from './sequelize/types/user';
-import { University } from './sequelize/types/university';
 import { initSequelize } from './sequelize/index';
 
 const app = express();
 const port = SERVER_PORT;
 const bcrypt = require('bcrypt');
 const { Client } = require('pg');
+const cors = require('cors');
 
 const client = new Client({
   user: DB_USER,
@@ -68,6 +68,9 @@ app.post('/signUp', async (req: any, res) => {
     isAuth,
   });
   user.isAuth = false;
+
+  res.header('Access-Control-Allow-Origin', '*'); //CORS 에러 해결 헤더 전달
+  res.header('Access-Control-Allow-Headers', '*');
   res.send(user);
 });
 
@@ -105,3 +108,5 @@ app.get('/', async (req, res) => {
 app.listen(port, () => {
   console.log('backend server listen');
 });
+
+app.use(cors());
