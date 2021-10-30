@@ -37,6 +37,10 @@ module.exports = {
         type: Sequelize.DataTypes.INTEGER,
         allowNull: false,
       },
+      profileImageUrl: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+      },
 
       createdAt: {
         type: Sequelize.DataTypes.DATE,

@@ -26,38 +26,47 @@ const initSequelize = () => {
       email: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       password: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       name: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       universityID: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       address: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       point: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        defaultValue: 0,
       },
       biddingPoint: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        defaultValue: 0,
       },
       profileImageUrl: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       isAuth: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
+        defaultValue: false,
       },
     },
     {
