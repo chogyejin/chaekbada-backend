@@ -1,4 +1,5 @@
 import express from 'express';
+
 import {
   SERVER_PORT,
   DB_HOST,
@@ -68,9 +69,6 @@ app.post('/signUp', async (req: any, res) => {
     isAuth,
   });
   user.isAuth = false;
-
-  res.header('Access-Control-Allow-Origin', '*'); //CORS 에러 해결 헤더 전달
-  res.header('Access-Control-Allow-Headers', '*');
   res.send(user);
 });
 
