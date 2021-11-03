@@ -32,25 +32,20 @@ initSequelize();
 
 app.use(cors());
 
-app.use((req: any, res) => {
+app.use((req: any, res, next) => {
   try {
-    // 모든 API 요청, 헤더에 저장된 토큰(req.headers.authorization)과 비밀키를 사용하여 토큰 반환
+    const token = (req.headers.authorization || '').split(' ')[1]; // Authorization: 'Bearer TOKEN'
+    console.log(req.headers);
     console.log(req.headers.authorization);
-    req.decoded = jwt.verify(req.headers.authorization, process.env.JWT_SECRET);
-    return res.send(true);
-  } catch (error: any) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(419).json({
-        code: 419,
-        message: '토큰이 만료되었습니다.',
-      });
+    console.log(req.query);
+    if (!token) {
+      throw new Error('Authentication failed!');
     }
-
-    // 토큰의 비밀키가 일치하지 않는 경우
-    return res.status(401).json({
-      code: 401,
-      message: '유효하지 않은 토큰입니다.',
-    });
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified;
+    next();
+  } catch (e: any) {
+    res.status(400).send('Invalid token !');
   }
 });
 
@@ -95,8 +90,6 @@ app.post('/signUp', async (req: any, res) => {
   });
   user.isAuth = false;
 
-  res.header('Access-Control-Allow-Origin', '*'); //CORS 에러 해결 헤더 전달
-  res.header('Access-Control-Allow-Headers', '*');
   res.send(user);
 });
 
@@ -110,23 +103,6 @@ app.get('/signUp/email-check', async (req: any, res) => {
   }
   return res.send(true);
 });
-
-// app.get('/signIn', async (req: any, res) => {
-//   console.log('로그인 api');
-//   const { email, password }: { email: string; password: string } = req.query;
-//   const user = await User.findOne({ where: { email } });
-
-//   if (user) {
-//     const isMatch = await bcrypt.compare(password, user!.password);
-//     if (!isMatch) {
-//       return res.status(403).send(new Error('비밀번호가 틀렸습니다.'));
-//     }
-//   } else {
-//     return res.status(403).send(new Error('등록되지 않은 이메일입니다.'));
-//   }
-
-//   return res.send({ user: user });
-// });
 
 app.get('/signIn', async (req: any, res) => {
   console.log('로그인 api');
@@ -151,9 +127,8 @@ app.get('/signIn', async (req: any, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: '10m', // 10분
+        expiresIn: '7d', // 유효기간
         issuer: '토큰 발급자',
-        scope: '',
       },
     );
     return res.send({
