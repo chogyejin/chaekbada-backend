@@ -8,6 +8,7 @@ import {
   DB_PORT,
 } from './constant';
 import { User } from './sequelize/types/user';
+import { Book } from './sequelize/types/book';
 import { initSequelize } from './sequelize/index';
 require('dotenv').config();
 
@@ -143,6 +144,46 @@ app.get('/signIn', async (req: any, res) => {
       code: 500,
       message: '서버 에러',
     });
+  }
+});
+
+// isbn 으로 책 구분, 이미 디비에 있으면 true, 없으면 생성하고 false
+app.post('/isBookinDB', async (req: any, res) => {
+  console.log('kakao book에서 호출하는 api');
+  const {
+    title,
+    isbn,
+    datetime,
+    authors,
+    publisher,
+    price,
+    salePrice,
+    thumbnail,
+  }: {
+    title: string;
+    isbn: string;
+    datetime: Date;
+    authors: string[];
+    publisher: string;
+    price: number;
+    salePrice: number;
+    thumbnail: string;
+  } = req.query;
+  const book = await Book.findOne({ where: { isbn } });
+  if (!book) {
+    const book = await Book.create({
+      title,
+      isbn,
+      datetime,
+      authors,
+      publisher,
+      price,
+      salePrice,
+      thumbnail,
+    });
+    res.send(false);
+  } else {
+    res.send(true);
   }
 });
 
