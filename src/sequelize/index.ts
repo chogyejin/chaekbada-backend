@@ -199,34 +199,42 @@ const initSequelize = () => {
       title: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       isbn: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       datetime: {
         type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: new Date(),
       },
       authors: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: false,
+        defaultValue: [],
       },
       publisher: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
       price: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        defaultValue: 0,
       },
       salePrice: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        defaultValue: 0,
       },
       thumbnail: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: '',
       },
     },
     {
