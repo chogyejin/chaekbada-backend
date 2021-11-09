@@ -10,6 +10,7 @@ import {
 import { User } from './sequelize/types/user';
 import { Book } from './sequelize/types/book';
 import { initSequelize } from './sequelize/index';
+import { BookPost } from './sequelize/types/bookpost';
 require('dotenv').config();
 
 const app = express();
@@ -18,6 +19,8 @@ const bcrypt = require('bcrypt');
 const { Client } = require('pg');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const sequelize = require('sequelize');
+const Op = sequelize.Op;
 
 const client = new Client({
   user: DB_USER,
@@ -148,7 +151,7 @@ app.get('/signIn', async (req: any, res) => {
 });
 
 // isbn 으로 책 구분, 이미 디비에 있으면 true, 없으면 생성하고 false
-app.post('/isBookinDB', async (req: any, res) => {
+app.post('/bookPost/isBookinDB', async (req: any, res) => {
   console.log('kakao book에서 호출하는 api');
   const {
     title,
@@ -169,7 +172,10 @@ app.post('/isBookinDB', async (req: any, res) => {
     salePrice: number;
     thumbnail: string;
   } = req.query;
+
+  // findOrCreate
   const book = await Book.findOne({ where: { isbn } });
+
   if (!book) {
     const book = await Book.create({
       title,
