@@ -234,10 +234,40 @@ app.post('/bookPost/write', async (req: any, res) => {
     isActive,
     thumbnail,
   });
-  console.log('book post : ');
-  console.log(bookPost);
+
   res.send(bookPost);
 });
+
+// 최신순 bookPost
+app.get('/bookPostList/new', async (req: any, res) => {
+  console.log('판매글 최신순');
+  const bookPosts = await BookPost.findAll({
+    where: {},
+    include: {
+      model: User,
+      as: 'user',
+      attributes: ['name'],
+    },
+    order: [['createdAt', 'ASC']],
+  });
+  res.send(bookPosts);
+});
+
+// 관심 많은 글 = hottest
+app.get('/bookPostList/hot', async (req: any, res) => {
+  console.log('판매글 인기순');
+  const bookPosts = await BookPost.findAll({
+    where: {},
+    include: {
+      model: User,
+      attributes: ['name'],
+      as: 'user',
+    },
+    order: [['interestedCounts', 'DESC']],
+  });
+  res.send(bookPosts);
+});
+
 app.get('/', async (req, res) => {
   res.send('hello');
 });

@@ -351,6 +351,10 @@ const initSequelize = () => {
     foreignKey: 'universityID',
     as: 'university',
   });
+  BookPost.belongsTo(User, {
+    foreignKey: 'id',
+    as: 'user',
+  });
 };
 
 export { initSequelize };
