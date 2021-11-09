@@ -192,7 +192,52 @@ app.post('/bookPost/isBookinDB', async (req: any, res) => {
     res.send(true);
   }
 });
+app.post('/bookPost/write', async (req: any, res) => {
+  console.log('상품등록글 작성 api');
+  const {
+    bookID,
+    title,
+    contents,
+    userID,
+    endDate,
+    reservePrice,
+    buyingItNowPrice,
+    bookImageUrl,
+    thumbnail,
+  }: {
+    bookID: string;
+    title: string;
+    contents: string;
+    userID: string;
+    endDate: Date;
+    reservePrice: number;
+    buyingItNowPrice: number;
+    bookImageUrl: string;
+    thumbnail: string;
+  } = req.query;
 
+  const bidPrice = 0;
+  const isActive = true;
+  const interestedCounts = 0;
+
+  const bookPost = await BookPost.create({
+    bookID,
+    title,
+    contents,
+    userID,
+    interestedCounts,
+    endDate,
+    bidPrice,
+    reservePrice,
+    buyingItNowPrice,
+    bookImageUrl,
+    isActive,
+    thumbnail,
+  });
+  console.log('book post : ');
+  console.log(bookPost);
+  res.send(bookPost);
+});
 app.get('/', async (req, res) => {
   res.send('hello');
 });
