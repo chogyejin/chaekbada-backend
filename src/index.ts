@@ -40,9 +40,7 @@ app.use(cors());
 app.use((req: any, res, next) => {
   try {
     const token = (req.headers.authorization || '').split(' ')[1]; // Authorization: 'Bearer TOKEN'
-    console.log(req.headers);
-    console.log(req.headers.authorization);
-    console.log(req.query);
+
     if (!token) {
       throw new Error('Authentication failed!');
     }
@@ -55,13 +53,12 @@ app.use((req: any, res, next) => {
 });
 
 app.post('/signUp', async (req: any, res) => {
-  console.log('회원가입 api');
   const {
     email,
     password,
     name,
     address,
-    universityID,
+    universityName,
     point,
     biddingPoint,
     profileImageUrl,
@@ -71,7 +68,7 @@ app.post('/signUp', async (req: any, res) => {
     password: string;
     name: string;
     address: string;
-    universityID: string;
+    universityName: string;
     point: number;
     biddingPoint: number;
     profileImageUrl: string;
@@ -87,7 +84,7 @@ app.post('/signUp', async (req: any, res) => {
     password: hashedPassword,
     name,
     address,
-    universityID,
+    universityName,
     point,
     biddingPoint,
     profileImageUrl,
@@ -99,7 +96,6 @@ app.post('/signUp', async (req: any, res) => {
 });
 
 app.get('/signUp/email-check', async (req: any, res) => {
-  console.log('email 중복체크 api');
   const { email }: { email: string } = req.query;
   const user = await User.findOne({ where: { email } });
 
@@ -110,25 +106,25 @@ app.get('/signUp/email-check', async (req: any, res) => {
 });
 
 app.get('/signIn', async (req: any, res) => {
-  console.log('로그인 api');
   const { email, password }: { email: string; password: string } = req.query;
   const user = await User.findOne({ where: { email } });
 
-  //예외
-  if (user) {
-    const isMatch = await bcrypt.compare(password, user!.password);
-    if (!isMatch) {
-      return res.status(403).send(new Error('비밀번호가 틀렸습니다.'));
-    }
-  } else {
-    return res.status(403).send(new Error('등록되지 않은 이메일입니다.'));
+  if(!user){
+    res.status(403).send(new Error('등록되지 않은 이메일입니다.'));
+    return;
+  }
+
+  const isMatch = await bcrypt.compare(password, user!.password);
+  if (!isMatch) {
+    return res.status(403).send(new Error('비밀번호가 틀렸습니다.'));
   }
 
   try {
     // jwt.sign(): 토큰 발급
     const token = jwt.sign(
       {
-        email,
+        email:user.email,
+        id: user.id
       },
       process.env.JWT_SECRET,
       {
@@ -140,10 +136,8 @@ app.get('/signIn', async (req: any, res) => {
       code: 200,
       message: '토큰이 발급되었습니다.',
       token,
-      user: user,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).send({
       code: 500,
       message: '서버 에러',
@@ -153,7 +147,6 @@ app.get('/signIn', async (req: any, res) => {
 
 // isbn 으로 책 구분, 이미 디비에 있으면 true, 없으면 생성하고 false
 app.post('/bookPost/isBookinDB', async (req: any, res) => {
-  console.log('kakao book에서 호출하는 api');
   const {
     title,
     isbn,
@@ -177,8 +170,12 @@ app.post('/bookPost/isBookinDB', async (req: any, res) => {
   // findOrCreate
   const book = await Book.findOne({ where: { isbn } });
 
-  if (!book) {
-    const book = await Book.create({
+  if(book){
+    res.send(book);
+    return;
+  }
+
+    const createdBook = await Book.create({
       title,
       isbn,
       datetime,
@@ -188,16 +185,12 @@ app.post('/bookPost/isBookinDB', async (req: any, res) => {
       salePrice,
       thumbnail,
     });
-  }
-  const bookID = await Book.findOne({
-    where: { isbn },
-    attributes: ['id'],
-  });
-  res.send(bookID);
+
+  res.send(createdBook);
+  return;
 });
 
 app.post('/bookPost/write', async (req: any, res) => {
-  console.log('상품등록글 작성 api');
   const {
     bookID,
     title,
@@ -244,16 +237,18 @@ app.post('/bookPost/write', async (req: any, res) => {
 
 // 최신순 bookPost
 app.get('/bookPostList/new', async (req: any, res) => {
-  console.log('판매글 최신순');
   const bookPosts = await BookPost.findAll({
     order: [['createdAt', 'ASC']],
+    include:[{
+      as:"user",
+      model:User
+    }]
   });
   res.send(bookPosts);
 });
 
 // 관심 많은 글 = hottest
 app.get('/bookPostList/hot', async (req: any, res) => {
-  console.log('판매글 인기순');
   const bookPosts = await BookPost.findAll({
     where: {},
     include: {
@@ -286,7 +281,6 @@ app.get('/bookPost/searchBook', async (req: any, res) => {
     },
     order: [['createdAt', 'ASC']],
   });
-  console.log(searchedBookPosts);
   res.send(searchedBookPosts);
 });
 
