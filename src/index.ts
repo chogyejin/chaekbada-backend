@@ -109,7 +109,7 @@ app.get('/signIn', async (req: any, res) => {
   const { email, password }: { email: string; password: string } = req.query;
   const user = await User.findOne({ where: { email } });
 
-  if(!user){
+  if (!user) {
     res.status(403).send(new Error('등록되지 않은 이메일입니다.'));
     return;
   }
@@ -123,8 +123,8 @@ app.get('/signIn', async (req: any, res) => {
     // jwt.sign(): 토큰 발급
     const token = jwt.sign(
       {
-        email:user.email,
-        id: user.id
+        email: user.email,
+        id: user.id,
       },
       process.env.JWT_SECRET,
       {
@@ -170,21 +170,21 @@ app.post('/bookPost/isBookinDB', async (req: any, res) => {
   // findOrCreate
   const book = await Book.findOne({ where: { isbn } });
 
-  if(book){
+  if (book) {
     res.send(book);
     return;
   }
 
-    const createdBook = await Book.create({
-      title,
-      isbn,
-      datetime,
-      authors,
-      publisher,
-      price,
-      salePrice,
-      thumbnail,
-    });
+  const createdBook = await Book.create({
+    title,
+    isbn,
+    datetime,
+    authors,
+    publisher,
+    price,
+    salePrice,
+    thumbnail,
+  });
 
   res.send(createdBook);
   return;
@@ -239,10 +239,13 @@ app.post('/bookPost/write', async (req: any, res) => {
 app.get('/bookPostList/new', async (req: any, res) => {
   const bookPosts = await BookPost.findAll({
     order: [['createdAt', 'ASC']],
-    include:[{
-      as:"user",
-      model:User
-    }]
+    include: [
+      {
+        attributes: ['name'],
+        as: 'user',
+        model: User,
+      },
+    ],
   });
   res.send(bookPosts);
 });
@@ -254,7 +257,7 @@ app.get('/bookPostList/hot', async (req: any, res) => {
     include: {
       model: User,
       attributes: ['name'],
-      as: 'bookPostUserID',
+      as: 'user',
     },
     order: [['interestedCounts', 'DESC']],
   });
@@ -262,21 +265,17 @@ app.get('/bookPostList/hot', async (req: any, res) => {
 });
 
 // 전체글에 이 책을 판매하는 글이 있는가
-// bookPost의 title, authors, buyingItNowPrice, bidPrice, endDate, userID로 User의 name
 app.get('/bookPost/searchBook', async (req: any, res) => {
   const { searchWord }: { searchWord: string } = req.query;
-  //let searchWord; searchWord = searchWord.trim();
-
   const searchedBookPosts = await BookPost.findAll({
     include: [
-      /*{
+      {
         model: User,
         attributes: ['name'],
         as: 'user',
-      },*/
+      },
     ],
     where: {
-      // 검색 안되고 있음
       title: { [Op.like]: '%' + searchWord + '%' },
     },
     order: [['createdAt', 'ASC']],
