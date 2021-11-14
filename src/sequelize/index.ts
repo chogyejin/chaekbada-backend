@@ -176,7 +176,7 @@ const initSequelize = () => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      status: {
+      isHighest: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
       },

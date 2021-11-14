@@ -5,7 +5,7 @@ interface UsersAttributes {
   userID: string;
   bookPostID: string;
   point: number;
-  status: boolean;
+  isHighest: boolean;
 }
 
 interface UsersCreationAttributes extends Optional<UsersAttributes, 'id'> {}
@@ -18,7 +18,7 @@ class BidOrder
   public userID!: string;
   public bookPostID!: string;
   public point!: number;
-  public status!: boolean;
+  public isHighest!: boolean;
 
   // timestamps!
   public readonly createdAt!: Date;

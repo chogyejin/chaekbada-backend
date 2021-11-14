@@ -21,8 +21,8 @@ module.exports = {
         type: Sequelize.DataTypes.TEXT,
         allowNull: false,
       },
-      status: {
-        type: Sequelize.DataTypes.STRING,
+      isHighest: {
+        type: Sequelize.DataTypes.BOOLEAN,
         allowNull: false,
       },
 
