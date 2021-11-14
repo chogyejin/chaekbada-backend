@@ -12,6 +12,7 @@ import { Book } from './sequelize/types/book';
 import { initSequelize } from './sequelize/index';
 import { BookPost } from './sequelize/types/bookpost';
 import { runInNewContext } from 'vm';
+import { InterestedPosts } from './sequelize/types/interestedposts';
 require('dotenv').config();
 
 const app = express();
@@ -167,7 +168,6 @@ app.post('/bookPost/isBookinDB', async (req: any, res) => {
     thumbnail: string;
   } = req.query;
 
-  // findOrCreate
   const book = await Book.findOne({ where: { isbn } });
 
   if (book) {
@@ -288,9 +288,71 @@ app.get('/bookPost/post', async (req: any, res) => {
   const { bookPostID }: { bookPostID: string } = req.query;
 
   const post = await BookPost.findOne({
+    include: [
+      {
+        model: User,
+        attributes: ['name'],
+        as: 'user',
+      },
+    ],
     where: { id: bookPostID },
   });
   res.send(post);
+});
+
+// 찜
+app.post('/bookPost/post/interestCount', async (req: any, res) => {
+  const { bookPostID }: { bookPostID: string } = req.query;
+  const bookPost = await BookPost.findOne({
+    where: { id: bookPostID },
+  });
+
+  if (!bookPost) {
+    return;
+  }
+
+  //bookPost.interestedCounts;
+  const interestedPosts = await InterestedPosts.findOne({
+    where: {
+      bookPostID: bookPost.id,
+      userID: bookPost.userID,
+    },
+  });
+
+  if (!interestedPosts) {
+    await BookPost.update(
+      {
+        interestedCounts: bookPost.interestedCounts + 1,
+      },
+      {
+        where: {
+          id: bookPostID,
+        },
+      },
+    );
+    const interestedPosts = await InterestedPosts.create({
+      userID: bookPost.userID,
+      bookPostID: bookPost.id,
+    });
+  }
+
+  await BookPost.update(
+    {
+      interestedCounts: bookPost.interestedCounts - 1,
+    },
+    {
+      where: {
+        id: bookPostID,
+      },
+    },
+  );
+
+  await InterestedPosts.destroy({
+    where: {
+      bookPostID: bookPost.id,
+      userID: bookPost.userID,
+    },
+  });
 });
 
 app.get('/', async (req, res) => {
