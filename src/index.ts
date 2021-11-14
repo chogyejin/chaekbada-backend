@@ -246,12 +246,6 @@ app.post('/bookPost/write', async (req: any, res) => {
 app.get('/bookPostList/new', async (req: any, res) => {
   console.log('판매글 최신순');
   const bookPosts = await BookPost.findAll({
-    where: {},
-    include: {
-      model: User,
-      as: 'user',
-      attributes: ['name'],
-    },
     order: [['createdAt', 'ASC']],
   });
   res.send(bookPosts);
@@ -265,7 +259,7 @@ app.get('/bookPostList/hot', async (req: any, res) => {
     include: {
       model: User,
       attributes: ['name'],
-      as: 'UserID',
+      as: 'bookPostUserID',
     },
     order: [['interestedCounts', 'DESC']],
   });
