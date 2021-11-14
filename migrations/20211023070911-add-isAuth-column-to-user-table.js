@@ -3,7 +3,7 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.addColumn(
-      { schema: 'chaekbada', tableName: 'User' },
+      {  tableName: 'User' },
       'isAuth',
       {
         type: Sequelize.DataTypes.BOOLEAN,
@@ -14,7 +14,7 @@ module.exports = {
 
   down: (queryInterface, Sequelize) => {
     return queryInterface.removeColumn(
-      { schema: 'chaekbada', tableName: 'User' },
+      {  tableName: 'User' },
       'isAuth',
     );
   },

@@ -14,7 +14,7 @@ module.exports = {
         allowNull: false,
       },
       userID: {
-        type: Sequelize.DataTypes.STRING,
+        type: Sequelize.DataTypes.UUID,
         allowNull: false,
       },
       verificationCode: {

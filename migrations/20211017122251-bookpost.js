@@ -10,7 +10,7 @@ module.exports = {
         primaryKey: true,
       },
       bookID: {
-        type: Sequelize.DataTypes.STRING,
+        type: Sequelize.DataTypes.UUID,
         allowNull: false,
       },
       title: {
@@ -22,7 +22,7 @@ module.exports = {
         allowNull: false,
       },
       userID: {
-        type: Sequelize.DataTypes.STRING,
+        type: Sequelize.DataTypes.UUID,
         allowNull: false,
       },
       interestedCounts: {
