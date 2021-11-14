@@ -5,7 +5,7 @@ interface UsersAttributes {
   email: string;
   password: string;
   name: string;
-  universityID: string;
+  universityName: string;
   address: string;
   point: number;
   biddingPoint: number;
@@ -23,7 +23,7 @@ class User
   public email!: string;
   public password!: string;
   public name!: string;
-  public universityID!: string;
+  public universityName!: string;
   public address!: string;
   public point!: number;
   public biddingPoint!: number;

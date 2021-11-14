@@ -10,11 +10,11 @@ module.exports = {
         primaryKey: true,
       },
       userID: {
-        type: Sequelize.DataTypes.STRING,
+        type: Sequelize.DataTypes.UUID,
         allowNull: false,
       },
       bookPostID: {
-        type: Sequelize.DataTypes.STRING,
+        type: Sequelize.DataTypes.UUID,
         allowNull: false,
       },
 
