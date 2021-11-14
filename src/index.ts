@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   SERVER_PORT,
   DB_HOST,
@@ -6,22 +6,22 @@ import {
   DB_PASSWORD,
   DB_NAME,
   DB_PORT,
-} from './constant';
-import { User } from './sequelize/types/user';
-import { Book } from './sequelize/types/book';
-import { initSequelize } from './sequelize/index';
-import { BookPost } from './sequelize/types/bookpost';
-import { runInNewContext } from 'vm';
-import { InterestedPosts } from './sequelize/types/interestedposts';
-require('dotenv').config();
+} from "./constant";
+import { User } from "./sequelize/types/user";
+import { Book } from "./sequelize/types/book";
+import { initSequelize } from "./sequelize/index";
+import { BookPost } from "./sequelize/types/bookpost";
+import { runInNewContext } from "vm";
+import { InterestedPosts } from "./sequelize/types/interestedposts";
+require("dotenv").config();
 
 const app = express();
 const port = SERVER_PORT;
-const bcrypt = require('bcrypt');
-const { Client } = require('pg');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const sequelize = require('sequelize');
+const bcrypt = require("bcrypt");
+const { Client } = require("pg");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const sequelize = require("sequelize");
 const Op = sequelize.Op;
 
 const client = new Client({
@@ -40,20 +40,20 @@ app.use(cors());
 
 app.use((req: any, res, next) => {
   try {
-    const token = (req.headers.authorization || '').split(' ')[1]; // Authorization: 'Bearer TOKEN'
+    const token = (req.headers.authorization || "").split(" ")[1]; // Authorization: 'Bearer TOKEN'
 
     if (!token) {
-      throw new Error('Authentication failed!');
+      throw new Error("Authentication failed!");
     }
     const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
     next();
   } catch (e: any) {
-    res.status(400).send('Invalid token !');
+    res.status(400).send("Invalid token !");
   }
 });
 
-app.post('/signUp', async (req: any, res) => {
+app.post("/signUp", async (req: any, res) => {
   const {
     email,
     password,
@@ -96,7 +96,7 @@ app.post('/signUp', async (req: any, res) => {
   res.send(user);
 });
 
-app.get('/signUp/email-check', async (req: any, res) => {
+app.get("/signUp/email-check", async (req: any, res) => {
   const { email }: { email: string } = req.query;
   const user = await User.findOne({ where: { email } });
 
@@ -106,18 +106,18 @@ app.get('/signUp/email-check', async (req: any, res) => {
   return res.send(true);
 });
 
-app.get('/signIn', async (req: any, res) => {
+app.get("/signIn", async (req: any, res) => {
   const { email, password }: { email: string; password: string } = req.query;
   const user = await User.findOne({ where: { email } });
 
   if (!user) {
-    res.status(403).send(new Error('등록되지 않은 이메일입니다.'));
+    res.status(403).send(new Error("등록되지 않은 이메일입니다."));
     return;
   }
 
   const isMatch = await bcrypt.compare(password, user!.password);
   if (!isMatch) {
-    return res.status(403).send(new Error('비밀번호가 틀렸습니다.'));
+    return res.status(403).send(new Error("비밀번호가 틀렸습니다."));
   }
 
   try {
@@ -129,25 +129,25 @@ app.get('/signIn', async (req: any, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: '7d', // 유효기간
-        issuer: '토큰 발급자',
-      },
+        expiresIn: "7d", // 유효기간
+        issuer: "토큰 발급자",
+      }
     );
     return res.send({
       code: 200,
-      message: '토큰이 발급되었습니다.',
+      message: "토큰이 발급되었습니다.",
       token,
     });
   } catch (error) {
     return res.status(500).send({
       code: 500,
-      message: '서버 에러',
+      message: "서버 에러",
     });
   }
 });
 
 // isbn 으로 책 구분, 이미 디비에 있으면 true, 없으면 생성하고 false
-app.post('/bookPost/isBookinDB', async (req: any, res) => {
+app.post("/bookPost/isBookinDB", async (req: any, res) => {
   const {
     title,
     isbn,
@@ -190,7 +190,7 @@ app.post('/bookPost/isBookinDB', async (req: any, res) => {
   return;
 });
 
-app.post('/bookPost/write', async (req: any, res) => {
+app.post("/bookPost/write", async (req: any, res) => {
   const {
     bookID,
     title,
@@ -236,13 +236,13 @@ app.post('/bookPost/write', async (req: any, res) => {
 });
 
 // 최신순 bookPost
-app.get('/bookPostList/new', async (req: any, res) => {
+app.get("/bookPostList/new", async (req: any, res) => {
   const bookPosts = await BookPost.findAll({
-    order: [['createdAt', 'ASC']],
+    order: [["createdAt", "ASC"]],
     include: [
       {
-        attributes: ['name'],
-        as: 'user',
+        attributes: ["name"],
+        as: "user",
         model: User,
       },
     ],
@@ -251,55 +251,55 @@ app.get('/bookPostList/new', async (req: any, res) => {
 });
 
 // 관심 많은 글 = hottest
-app.get('/bookPostList/hot', async (req: any, res) => {
+app.get("/bookPostList/hot", async (req: any, res) => {
   const bookPosts = await BookPost.findAll({
     where: {},
     include: {
       model: User,
-      attributes: ['name'],
-      as: 'user',
+      attributes: ["name"],
+      as: "user",
     },
-    order: [['interestedCounts', 'DESC']],
+    order: [["interestedCounts", "DESC"]],
   });
   res.send(bookPosts);
 });
 
 // 전체글에 이 책을 판매하는 글이 있는가
-app.get('/bookPost/searchBook', async (req: any, res) => {
+app.get("/bookPost/searchBook", async (req: any, res) => {
   const { searchWord }: { searchWord: string } = req.query;
   const searchedBookPosts = await BookPost.findAll({
     include: [
       {
         model: User,
-        attributes: ['name'],
-        as: 'user',
+        attributes: ["name"],
+        as: "user",
       },
     ],
     where: {
-      title: { [Op.like]: '%' + searchWord + '%' },
+      title: { [Op.like]: "%" + searchWord + "%" },
     },
-    order: [['createdAt', 'ASC']],
+    order: [["createdAt", "ASC"]],
   });
   res.send(searchedBookPosts);
 });
 
 // 상세페이지
-app.get('/bookPost/post', async (req: any, res) => {
+app.get("/bookPost/post", async (req: any, res) => {
   const { bookPostID }: { bookPostID: string } = req.query;
 
   const post = await BookPost.findOne({
     include: [
       {
         model: User,
-        attributes: ['name'],
-        as: 'user',
+        attributes: ["name"],
+        as: "user",
       },
     ],
     where: { id: bookPostID },
     include: [
       {
-        attributes: ['name'],
-        as: 'user',
+        attributes: ["name"],
+        as: "user",
         model: User,
       },
     ],
@@ -308,7 +308,7 @@ app.get('/bookPost/post', async (req: any, res) => {
 });
 
 // 찜
-app.post('/bookPost/post/interestCount', async (req: any, res) => {
+app.post("/bookPost/post/interestCount", async (req: any, res) => {
   const { bookPostID }: { bookPostID: string } = req.query;
   const bookPost = await BookPost.findOne({
     where: { id: bookPostID },
@@ -335,7 +335,7 @@ app.post('/bookPost/post/interestCount', async (req: any, res) => {
         where: {
           id: bookPostID,
         },
-      },
+      }
     );
     const interestedPosts = await InterestedPosts.create({
       userID: bookPost.userID,
@@ -351,7 +351,7 @@ app.post('/bookPost/post/interestCount', async (req: any, res) => {
       where: {
         id: bookPostID,
       },
-    },
+    }
   );
 
   await InterestedPosts.destroy({
@@ -362,24 +362,23 @@ app.post('/bookPost/post/interestCount', async (req: any, res) => {
   });
 });
 
-app.get('/', async (req, res) => {
-  res.send('hello');
+app.get("/", async (req, res) => {
+  res.send("hello");
 });
 
-app.get("/user", async  (req: any, res)=>{
+app.get("/user", async (req: any, res) => {
   const { id }: { id: string } = req.query;
 
   const user = await User.findOne({
-    where:{
-      id
-    }
-  })
+    where: {
+      id,
+    },
+  });
 
-  res.send(user)
+  res.send(user);
   return;
-
-})
+});
 
 app.listen(port, () => {
-  console.log('backend server listen');
+  console.log("backend server listen");
 });
