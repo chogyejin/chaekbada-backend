@@ -13,6 +13,7 @@ import { initSequelize } from "./sequelize/index";
 import { BookPost } from "./sequelize/types/bookpost";
 import { runInNewContext } from "vm";
 import { InterestedPosts } from "./sequelize/types/interestedposts";
+import { BidOrder } from "./sequelize/types/bidorder";
 require("dotenv").config();
 
 const app = express();
@@ -334,7 +335,7 @@ app.post("/bookPost/post/interestCount", async (req: any, res) => {
       userID: bookPost.userID,
       bookPostID: bookPost.id,
     });
-    return ;
+    return;
   }
 
   await BookPost.update(
@@ -370,6 +371,114 @@ app.get("/user", async (req: any, res) => {
   });
 
   res.send(user);
+  return;
+});
+
+app.put("/bidBookPost", async (req: any, res) => {
+  const {
+    bookPostID,
+    userID,
+    bidPrice,
+  }: {
+    bookPostID: string;
+    userID: string;
+    bidPrice: string;
+  } = req.query;
+
+  const user = await User.findOne({
+    where: {
+      id: userID,
+    },
+  });
+  const bookPost = await BookPost.findOne({
+    where: {
+      id: bookPostID,
+    },
+  });
+
+  if (!user || !bookPost) {
+    console.log("설마 여기에요?");
+    res.send(false);
+    return;
+  }
+
+  const useablePoint = user.point - user.biddingPoint;
+  const isPayable = useablePoint > Number(bidPrice);
+  if (!isPayable) {
+    res.send(false);
+    return;
+  }
+
+  const isBiddingBookPost = bookPost.bidPrice > 0;
+  if (isBiddingBookPost) {
+    const result = await BidOrder.update(
+      {
+        bookPostID,
+        isHighest: false,
+      },
+      {
+        where: {
+          bookPostID,
+          isHighest: true,
+        },
+        returning: true,
+      }
+    );
+
+    if (!result) {
+      res.send(false);
+      return;
+    }
+    const failBidOrder = result[1][0];
+    const failBidUser = await User.findOne({
+      where: {
+        id: failBidOrder.userID,
+      },
+    });
+    if (!failBidUser) {
+      res.send(false);
+      return;
+    }
+    await User.update(
+      {
+        biddingPoint: failBidUser.biddingPoint - failBidOrder.point,
+      },
+      {
+        where: {
+          id: failBidOrder.userID,
+        },
+      }
+    );
+  }
+
+  await BidOrder.create({
+    userID,
+    bookPostID,
+    point: Number(bidPrice),
+    isHighest: true,
+  });
+  await User.update(
+    {
+      biddingPoint: user.biddingPoint + Number(bidPrice),
+    },
+    {
+      where: {
+        id: userID,
+      },
+    }
+  );
+  await BookPost.update(
+    {
+      bidPrice: Number(bidPrice),
+    },
+    {
+      where: {
+        id: bookPostID,
+      },
+    }
+  );
+
+  res.send(true);
   return;
 });
 
