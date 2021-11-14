@@ -288,22 +288,8 @@ app.get('/bookPost/searchBook', async (req: any, res) => {
 app.get('/bookPost/post', async (req: any, res) => {
   const { bookPostID }: { bookPostID: string } = req.query;
 
-  const post = await BookPost.findAll({
+  const post = await BookPost.findOne({
     where: { id: bookPostID },
-    attributes: [
-      'title',
-      'bookID',
-      'contents',
-      'userID',
-      'interestedCounts',
-      'endDate',
-      'bidPrice',
-      'buyingItNowPrice',
-      'reservePrice',
-      'bookImageUrl',
-      'isActive',
-      'thumbnail',
-    ],
   });
   res.send(post);
 });
