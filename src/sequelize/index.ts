@@ -38,10 +38,9 @@ const initSequelize = () => {
         allowNull: false,
         defaultValue: '',
       },
-      universityID: {
+      universityName: {
         type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: '',
       },
       address: {
         type: DataTypes.STRING,
@@ -103,7 +102,7 @@ const initSequelize = () => {
         primaryKey: true,
       },
       bookID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       title: {
@@ -115,7 +114,7 @@ const initSequelize = () => {
         allowNull: false,
       },
       userID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       interestedCounts: {
@@ -166,11 +165,11 @@ const initSequelize = () => {
         primaryKey: true,
       },
       userID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       bookPostID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       point: {
@@ -260,11 +259,11 @@ const initSequelize = () => {
         allowNull: false,
       },
       bookID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       userID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
     },
@@ -287,7 +286,7 @@ const initSequelize = () => {
         allowNull: false,
       },
       userID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       contents: {
@@ -310,11 +309,11 @@ const initSequelize = () => {
         primaryKey: true,
       },
       userID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       bookPostID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
     },
@@ -337,7 +336,7 @@ const initSequelize = () => {
         allowNull: false,
       },
       userID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       verificationCode: {
@@ -355,17 +354,15 @@ const initSequelize = () => {
     },
   );
 
-  User.belongsTo(University, {
-    foreignKey: 'universityID',
-    as: 'university',
-  });
-
   // should write down the both of hasMany and belongsTo
   User.hasMany(BookPost, {
     foreignKey: 'userID',
     as: 'bookPostUserID',
   });
-  BookPost.belongsTo(User);
+  BookPost.belongsTo(User,{
+      foreignKey: 'userID',
+      as: 'user',
+  });
 };
 
 export { initSequelize };
