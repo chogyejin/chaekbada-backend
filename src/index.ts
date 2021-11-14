@@ -11,6 +11,7 @@ import { User } from './sequelize/types/user';
 import { Book } from './sequelize/types/book';
 import { initSequelize } from './sequelize/index';
 import { BookPost } from './sequelize/types/bookpost';
+import { runInNewContext } from 'vm';
 require('dotenv').config();
 
 const app = express();
@@ -187,11 +188,14 @@ app.post('/bookPost/isBookinDB', async (req: any, res) => {
       salePrice,
       thumbnail,
     });
-    res.send(false);
-  } else {
-    res.send(true);
   }
+  const bookID = await Book.findOne({
+    where: { isbn },
+    attributes: ['id'],
+  });
+  res.send(bookID);
 });
+
 app.post('/bookPost/write', async (req: any, res) => {
   console.log('상품등록글 작성 api');
   const {
@@ -261,11 +265,59 @@ app.get('/bookPostList/hot', async (req: any, res) => {
     include: {
       model: User,
       attributes: ['name'],
-      as: 'user',
+      as: 'UserID',
     },
     order: [['interestedCounts', 'DESC']],
   });
   res.send(bookPosts);
+});
+
+// 전체글에 이 책을 판매하는 글이 있는가
+// bookPost의 title, authors, buyingItNowPrice, bidPrice, endDate, userID로 User의 name
+app.get('/bookPost/searchBook', async (req: any, res) => {
+  const { searchWord }: { searchWord: string } = req.query;
+  //let searchWord; searchWord = searchWord.trim();
+
+  const searchedBookPosts = await BookPost.findAll({
+    include: [
+      /*{
+        model: User,
+        attributes: ['name'],
+        as: 'user',
+      },*/
+    ],
+    where: {
+      // 검색 안되고 있음
+      title: { [Op.like]: '%' + searchWord + '%' },
+    },
+    order: [['createdAt', 'ASC']],
+  });
+  console.log(searchedBookPosts);
+  res.send(searchedBookPosts);
+});
+
+// 상세페이지
+app.get('/bookPost/post', async (req: any, res) => {
+  const { bookPostID }: { bookPostID: string } = req.query;
+
+  const post = await BookPost.findAll({
+    where: { id: bookPostID },
+    attributes: [
+      'title',
+      'bookID',
+      'contents',
+      'userID',
+      'interestedCounts',
+      'endDate',
+      'bidPrice',
+      'buyingItNowPrice',
+      'reservePrice',
+      'bookImageUrl',
+      'isActive',
+      'thumbnail',
+    ],
+  });
+  res.send(post);
 });
 
 app.get('/', async (req, res) => {
