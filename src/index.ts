@@ -298,6 +298,20 @@ app.get('/', async (req, res) => {
   res.send('hello');
 });
 
+app.get("/user", async  (req: any, res)=>{
+  const { id }: { id: string } = req.query;
+
+  const user = await User.findOne({
+    where:{
+      id
+    }
+  })
+
+  res.send(user)
+  return;
+
+})
+
 app.listen(port, () => {
   console.log('backend server listen');
 });
