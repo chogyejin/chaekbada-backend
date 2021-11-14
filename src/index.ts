@@ -288,13 +288,6 @@ app.get("/bookPost/post", async (req: any, res) => {
   const { bookPostID }: { bookPostID: string } = req.query;
 
   const post = await BookPost.findOne({
-    include: [
-      {
-        model: User,
-        attributes: ["name"],
-        as: "user",
-      },
-    ],
     where: { id: bookPostID },
     include: [
       {
@@ -341,6 +334,7 @@ app.post("/bookPost/post/interestCount", async (req: any, res) => {
       userID: bookPost.userID,
       bookPostID: bookPost.id,
     });
+    return ;
   }
 
   await BookPost.update(
