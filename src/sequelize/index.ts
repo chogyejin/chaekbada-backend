@@ -354,7 +354,6 @@ const initSequelize = () => {
     },
   );
 
-  // should write down the both of hasMany and belongsTo
   User.hasMany(BookPost, {
     foreignKey: 'userID',
     as: 'bookPostUserID',
@@ -362,6 +361,10 @@ const initSequelize = () => {
   BookPost.belongsTo(User,{
       foreignKey: 'userID',
       as: 'user',
+  });
+  InterestedPosts.belongsTo(BookPost,{
+    foreignKey: 'bookPostID',
+    as: 'interestedPosts',
   });
 };
 

@@ -482,6 +482,27 @@ app.put("/bidBookPost", async (req: any, res) => {
   return;
 });
 
+// 관심글 가져오는 api
+app.get("/mypage/interestedPosts", async (req: any, res) => {
+  const {userID} : {userID : string } = req.query;
+  const interestedPosts = await InterestedPosts.findAll({
+    where: {
+      userID: userID,
+    },
+    include:{
+      model: BookPost,
+      as: "interestedPosts",
+    }
+  });
+  if(!interestedPosts){
+    console.log('no interested posts')
+    return;
+  }
+  // associate 설정 user한거 보고 참고하기
+  console.log(interestedPosts);
+  res.send(interestedPosts);
+});
+
 app.listen(port, () => {
   console.log("backend server listen");
 });
