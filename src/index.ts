@@ -302,7 +302,7 @@ app.get("/bookPost/post", async (req: any, res) => {
 });
 
 // 찜
-app.post("/bookPost/post/interestCount", async (req: any, res) => {
+app.post("/bookPost/post/interestedCount", async (req: any, res) => {
   const { bookPostID }: { bookPostID: string } = req.query;
   const bookPost = await BookPost.findOne({
     where: { id: bookPostID },
@@ -483,7 +483,7 @@ app.put("/bidBookPost", async (req: any, res) => {
 // 관심글 가져오는 api
 app.get("/mypage/list/interest", async (req: any, res) => {
   const {userID} : {userID : string } = req.query;
-  const interestedPosts = await InterestedPosts.findAll({
+  const interestedPost = await InterestedPosts.findAll({
     where: {
       userID: userID,
     },
@@ -492,19 +492,19 @@ app.get("/mypage/list/interest", async (req: any, res) => {
       as: "interestedPosts",
     }
   });
-  if(!interestedPosts){
+  if(!interestedPost){
     console.log('no interested posts')
     return;
   }
 
-  console.log(interestedPosts);
-  res.send(interestedPosts);
+  console.log(interestedPost);
+  res.send(interestedPost);
 });
 
 // 구매목록 가져오는 api
 app.get("/mypage/list/purchase", async (req: any, res) => {
   const {userID} : {userID : string } = req.query;
-  const biddedBookposts = await BidOrder.findAll({
+  const purchasedBookpost = await BidOrder.findAll({
     where: {
       userID: userID,
       isHighest : true,
@@ -518,34 +518,36 @@ app.get("/mypage/list/purchase", async (req: any, res) => {
     },
   });
 
-  if(!biddedBookposts){
+  if(!purchasedBookpost){
     console.log('no purchased book posts')
     return;
   }
 
-  console.log(biddedBookposts);
-  res.send(biddedBookposts);
+  res.send(purchasedBookpost);
 });
 
 // 입찰 참여 목록 가져오는 api
 app.get("/mypage/list/bid", async (req: any, res) => {
   const {userID} : {userID : string } = req.query;
-  const biddedBookposts = await BidOrder.findAll({
+  const biddingBookpost = await BidOrder.findAll({
     where: {
       userID: userID,
     },
     include:{
       model: BookPost,
       as: "bidBookPost",
+      where:{
+        isActive : true,
+      },
     }
   });
 
-  if(!biddedBookposts){
+  if(!biddingBookpost){
     console.log('no bidded book posts')
     return;
   }
-  console.log(biddedBookposts);
-  res.send(biddedBookposts);
+
+  res.send(biddingBookpost);
 });
 
 app.listen(port, () => {
