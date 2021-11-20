@@ -366,6 +366,14 @@ const initSequelize = () => {
     foreignKey: 'bookPostID',
     as: 'interestedPosts',
   });
+  BidOrder.belongsTo(BookPost,{
+    foreignKey: 'bookPostID',
+    as: 'bookPost',
+  });
+  BookPost.hasMany(BidOrder,{
+    foreignKey:'bookPostID',
+    as: 'bidOrder',
+  })
 };
 
 export { initSequelize };

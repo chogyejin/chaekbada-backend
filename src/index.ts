@@ -239,7 +239,7 @@ app.post("/bookPost/write", async (req: any, res) => {
 // 최신순 bookPost
 app.get("/bookPostList/new", async (req: any, res) => {
   const bookPosts = await BookPost.findAll({
-    order: [["createdAt", "ASC"]],
+    order: [["createdAt", "DESC"]],
     include: [
       {
         attributes: ["name"],
@@ -357,9 +357,7 @@ app.post("/bookPost/post/interestCount", async (req: any, res) => {
   });
 });
 
-app.get("/", async (req, res) => {
-  res.send("hello");
-});
+
 
 app.get("/user", async (req: any, res) => {
   const { id }: { id: string } = req.query;
@@ -483,7 +481,7 @@ app.put("/bidBookPost", async (req: any, res) => {
 });
 
 // 관심글 가져오는 api
-app.get("/mypage/interestedPosts", async (req: any, res) => {
+app.get("/mypage/list/interest", async (req: any, res) => {
   const {userID} : {userID : string } = req.query;
   const interestedPosts = await InterestedPosts.findAll({
     where: {
@@ -498,11 +496,61 @@ app.get("/mypage/interestedPosts", async (req: any, res) => {
     console.log('no interested posts')
     return;
   }
-  // associate 설정 user한거 보고 참고하기
+
   console.log(interestedPosts);
   res.send(interestedPosts);
 });
 
+// 구매목록 가져오는 api
+app.get("/mypage/list/purchase", async (req: any, res) => {
+  const {userID} : {userID : string } = req.query;
+  const biddedBookposts = await BidOrder.findAll({
+    where: {
+      userID: userID,
+      isHighest : true,
+    },
+    include:{
+      model: BookPost,
+      as: "bookPost",
+      where:{
+        isActive : false,
+      },
+    },
+  });
+
+  if(!biddedBookposts){
+    console.log('no purchased book posts')
+    return;
+  }
+
+  console.log(biddedBookposts);
+  res.send(biddedBookposts);
+});
+
+// 입찰 참여 목록 가져오는 api
+app.get("/mypage/list/bid", async (req: any, res) => {
+  const {userID} : {userID : string } = req.query;
+  const biddedBookposts = await BidOrder.findAll({
+    where: {
+      userID: userID,
+    },
+    include:{
+      model: BookPost,
+      as: "bidBookPost",
+    }
+  });
+
+  if(!biddedBookposts){
+    console.log('no bidded book posts')
+    return;
+  }
+  console.log(biddedBookposts);
+  res.send(biddedBookposts);
+});
+
 app.listen(port, () => {
   console.log("backend server listen");
+});
+app.get("/", async (req, res) => {
+  res.send("hello");
 });
