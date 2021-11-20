@@ -1,4 +1,4 @@
-import express from "express";
+import express from 'express';
 import {
   SERVER_PORT,
   DB_HOST,
@@ -6,24 +6,34 @@ import {
   DB_PASSWORD,
   DB_NAME,
   DB_PORT,
-} from "./constant";
-import { User } from "./sequelize/types/user";
-import { Book } from "./sequelize/types/book";
-import { initSequelize } from "./sequelize/index";
-import { BookPost } from "./sequelize/types/bookpost";
-import { runInNewContext } from "vm";
-import { InterestedPosts } from "./sequelize/types/interestedposts";
-import { BidOrder } from "./sequelize/types/bidorder";
-require("dotenv").config();
+  FRONT_END_URL,
+  TOASTS_API_END_POINT,
+  TOASTS_SECRET_KEY,
+  SENDER_MAIL,
+  TEST_RECEIVER_EMAIL,
+} from './constant';
+import { User } from './sequelize/types/user';
+import { Book } from './sequelize/types/book';
+import { initSequelize } from './sequelize/index';
+import { BookPost } from './sequelize/types/bookpost';
+import { runInNewContext } from 'vm';
+import { InterestedPosts } from './sequelize/types/interestedposts';
+import { BidOrder } from './sequelize/types/bidorder';
+import crypto from 'crypto';
+import fetch from 'cross-fetch';
+import { Auth } from './sequelize/types/auth';
+import { isJSDocAuthorTag } from 'typescript';
+require('dotenv').config();
 
 const app = express();
 const port = SERVER_PORT;
-const bcrypt = require("bcrypt");
-const { Client } = require("pg");
-const cors = require("cors");
-const jwt = require("jsonwebtoken");
-const sequelize = require("sequelize");
+const bcrypt = require('bcrypt');
+const { Client } = require('pg');
+const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const sequelize = require('sequelize');
 const Op = sequelize.Op;
+const moment = require('moment');
 
 const client = new Client({
   user: DB_USER,
@@ -41,20 +51,20 @@ app.use(cors());
 
 app.use((req: any, res, next) => {
   try {
-    const token = (req.headers.authorization || "").split(" ")[1]; // Authorization: 'Bearer TOKEN'
+    const token = (req.headers.authorization || '').split(' ')[1]; // Authorization: 'Bearer TOKEN'
 
     if (!token) {
-      throw new Error("Authentication failed!");
+      throw new Error('Authentication failed!');
     }
     const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
     next();
   } catch (e: any) {
-    res.status(400).send("Invalid token !");
+    res.status(400).send('Invalid token !');
   }
 });
 
-app.post("/signUp", async (req: any, res) => {
+app.post('/signUp', async (req: any, res) => {
   const {
     email,
     password,
@@ -90,14 +100,104 @@ app.post("/signUp", async (req: any, res) => {
     point,
     biddingPoint,
     profileImageUrl,
-    isAuth,
+    isAuth: false,
   });
-  user.isAuth = false;
+
+  const expirationTime = moment().add(6, 'h');
+  const token = crypto.randomBytes(16).toString('hex');
+
+  const body = {
+    senderAddress: SENDER_MAIL,
+    title: '이메일 인증 안내',
+    body: `<h2 style=\"padding-bottom: 10px; color: rgb(0, 0, 0); sans-serif; font-size: 22px; border-bottom: 4px solid rgb(68, 68, 68);\">이메일 인증</h2>
+            <p style=\"margin-top: 30px; margin-bottom: 30px; padding-bottom: 40px; font-family: 돋움, Dotum, Helvetica, &quot;Apple SD Gothic Neo&quot;, sans-serif; font-size: 12px; border-bottom: 1px solid rgb(204, 204, 204);\">
+                ${
+                  TEST_RECEIVER_EMAIL // user.email
+                }님, 안녕하세요.
+                <br>
+                책바다 이메일 인증 안내 메일입니다. 
+                <br>
+                이메일 주소 인증은 6시간동안 유효합니다.
+                <br>
+                아래 이메일 주소 인증하기를 통해 인증을 할 수 있습니다.
+                <br>
+                <br>
+                <a href=\"${FRONT_END_URL}/EmailVerification/${token}\" rel=\"noreferrer noopener\" target=\"_blank\" style=\"background: rgb(68, 68, 68); display: inline-block; color: rgb(255, 255, 255); font-weight: bold; text-align: center; padding: 20px 30px;\">
+                이메일 주소 인증하기</a>
+                <br>
+                <br>
+                이 메일 주소 인증절차는 회원님의 계정 정보를 보호하기 위해 꼭 거쳐야하는 절차임을 알려드립니다.
+                <br>
+                감사합니다.
+            </p>"`,
+    receiverList: [
+      {
+        receiveMailAddr: TEST_RECEIVER_EMAIL, // user.email
+        receiveType: 'MRT0',
+      },
+    ],
+  };
+
+  await fetch(TOASTS_API_END_POINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8',
+      'X-Secret-Key': TOASTS_SECRET_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const auth = await Auth.create({
+    userID: user.id,
+    verificationCode: token,
+    expirationTime: expirationTime,
+    isAuth: user.isAuth,
+  });
 
   res.send(user);
 });
 
-app.get("/signUp/email-check", async (req: any, res) => {
+app.post('/signUp/verification', async (req: any, res) => {
+  const { token }: { token: string } = req.query;
+  const auth = await Auth.findOne({
+    where: { verificationCode: token },
+    include: {
+      model: User,
+      as: 'user',
+    },
+  });
+  if (!auth) {
+    console.log('verification code 가 없습니다.');
+    res.send(false);
+    return;
+  }
+
+  const now = new Date();
+  const expirationTime = auth.expirationTime;
+  const isExpiration = moment(expirationTime).isBefore(now); // isExpiration이 true면 유효시간 지남
+  if (isExpiration) {
+    res.send(false);
+  }
+  await Auth.update(
+    {
+      isAuth: true,
+    },
+    {
+      where: { userID: auth.userID },
+    },
+  );
+  await User.update(
+    {
+      isAuth: true,
+    },
+    {
+      where: { id: auth.userID },
+    },
+  );
+  res.send(true);
+});
+
+app.get('/signUp/email-check', async (req: any, res) => {
   const { email }: { email: string } = req.query;
   const user = await User.findOne({ where: { email } });
 
@@ -107,18 +207,18 @@ app.get("/signUp/email-check", async (req: any, res) => {
   return res.send(true);
 });
 
-app.get("/signIn", async (req: any, res) => {
+app.get('/signIn', async (req: any, res) => {
   const { email, password }: { email: string; password: string } = req.query;
   const user = await User.findOne({ where: { email } });
 
   if (!user) {
-    res.status(403).send(new Error("등록되지 않은 이메일입니다."));
+    res.status(403).send(new Error('등록되지 않은 이메일입니다.'));
     return;
   }
 
   const isMatch = await bcrypt.compare(password, user!.password);
   if (!isMatch) {
-    return res.status(403).send(new Error("비밀번호가 틀렸습니다."));
+    return res.status(403).send(new Error('비밀번호가 틀렸습니다.'));
   }
 
   try {
@@ -130,25 +230,25 @@ app.get("/signIn", async (req: any, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "7d", // 유효기간
-        issuer: "토큰 발급자",
-      }
+        expiresIn: '7d', // 유효기간
+        issuer: '토큰 발급자',
+      },
     );
     return res.send({
       code: 200,
-      message: "토큰이 발급되었습니다.",
+      message: '토큰이 발급되었습니다.',
       token,
     });
   } catch (error) {
     return res.status(500).send({
       code: 500,
-      message: "서버 에러",
+      message: '서버 에러',
     });
   }
 });
 
 // isbn 으로 책 구분, 이미 디비에 있으면 true, 없으면 생성하고 false
-app.post("/bookPost/isBookinDB", async (req: any, res) => {
+app.post('/bookPost/isBookinDB', async (req: any, res) => {
   const {
     title,
     isbn,
@@ -191,7 +291,7 @@ app.post("/bookPost/isBookinDB", async (req: any, res) => {
   return;
 });
 
-app.post("/bookPost/write", async (req: any, res) => {
+app.post('/bookPost/write', async (req: any, res) => {
   const {
     bookID,
     title,
@@ -237,13 +337,13 @@ app.post("/bookPost/write", async (req: any, res) => {
 });
 
 // 최신순 bookPost
-app.get("/bookPostList/new", async (req: any, res) => {
+app.get('/bookPostList/new', async (req: any, res) => {
   const bookPosts = await BookPost.findAll({
-    order: [["createdAt", "DESC"]],
+    order: [['createdAt', 'DESC']],
     include: [
       {
-        attributes: ["name"],
-        as: "user",
+        attributes: ['name'],
+        as: 'user',
         model: User,
       },
     ],
@@ -252,48 +352,48 @@ app.get("/bookPostList/new", async (req: any, res) => {
 });
 
 // 관심 많은 글 = hottest
-app.get("/bookPostList/hot", async (req: any, res) => {
+app.get('/bookPostList/hot', async (req: any, res) => {
   const bookPosts = await BookPost.findAll({
     where: {},
     include: {
       model: User,
-      attributes: ["name"],
-      as: "user",
+      attributes: ['name'],
+      as: 'user',
     },
-    order: [["interestedCounts", "DESC"]],
+    order: [['interestedCounts', 'DESC']],
   });
   res.send(bookPosts);
 });
 
 // 전체글에 이 책을 판매하는 글이 있는가
-app.get("/bookPost/searchBook", async (req: any, res) => {
+app.get('/bookPost/searchBook', async (req: any, res) => {
   const { searchWord }: { searchWord: string } = req.query;
   const searchedBookPosts = await BookPost.findAll({
     include: [
       {
         model: User,
-        attributes: ["name"],
-        as: "user",
+        attributes: ['name'],
+        as: 'user',
       },
     ],
     where: {
-      title: { [Op.like]: "%" + searchWord + "%" },
+      title: { [Op.like]: '%' + searchWord + '%' },
     },
-    order: [["createdAt", "ASC"]],
+    order: [['createdAt', 'ASC']],
   });
   res.send(searchedBookPosts);
 });
 
 // 상세페이지
-app.get("/bookPost/post", async (req: any, res) => {
+app.get('/bookPost/post', async (req: any, res) => {
   const { bookPostID }: { bookPostID: string } = req.query;
 
   const post = await BookPost.findOne({
     where: { id: bookPostID },
     include: [
       {
-        attributes: ["name"],
-        as: "user",
+        attributes: ['name'],
+        as: 'user',
         model: User,
       },
     ],
@@ -302,7 +402,7 @@ app.get("/bookPost/post", async (req: any, res) => {
 });
 
 // 찜
-app.post("/bookPost/post/interestedCount", async (req: any, res) => {
+app.post('/bookPost/post/interestedCount', async (req: any, res) => {
   const { bookPostID }: { bookPostID: string } = req.query;
   const bookPost = await BookPost.findOne({
     where: { id: bookPostID },
@@ -329,7 +429,7 @@ app.post("/bookPost/post/interestedCount", async (req: any, res) => {
         where: {
           id: bookPostID,
         },
-      }
+      },
     );
     const interestedPosts = await InterestedPosts.create({
       userID: bookPost.userID,
@@ -346,7 +446,7 @@ app.post("/bookPost/post/interestedCount", async (req: any, res) => {
       where: {
         id: bookPostID,
       },
-    }
+    },
   );
 
   await InterestedPosts.destroy({
@@ -357,9 +457,7 @@ app.post("/bookPost/post/interestedCount", async (req: any, res) => {
   });
 });
 
-
-
-app.get("/user", async (req: any, res) => {
+app.get('/user', async (req: any, res) => {
   const { id }: { id: string } = req.query;
 
   const user = await User.findOne({
@@ -372,7 +470,7 @@ app.get("/user", async (req: any, res) => {
   return;
 });
 
-app.put("/bidBookPost", async (req: any, res) => {
+app.put('/bidBookPost', async (req: any, res) => {
   const {
     bookPostID,
     userID,
@@ -395,7 +493,7 @@ app.put("/bidBookPost", async (req: any, res) => {
   });
 
   if (!user || !bookPost) {
-    console.log("설마 여기에요?");
+    console.log('설마 여기에요?');
     res.send(false);
     return;
   }
@@ -420,7 +518,7 @@ app.put("/bidBookPost", async (req: any, res) => {
           isHighest: true,
         },
         returning: true,
-      }
+      },
     );
 
     if (!result) {
@@ -445,7 +543,7 @@ app.put("/bidBookPost", async (req: any, res) => {
         where: {
           id: failBidOrder.userID,
         },
-      }
+      },
     );
   }
 
@@ -463,7 +561,7 @@ app.put("/bidBookPost", async (req: any, res) => {
       where: {
         id: userID,
       },
-    }
+    },
   );
   await BookPost.update(
     {
@@ -473,7 +571,7 @@ app.put("/bidBookPost", async (req: any, res) => {
       where: {
         id: bookPostID,
       },
-    }
+    },
   );
 
   res.send(true);
@@ -481,19 +579,19 @@ app.put("/bidBookPost", async (req: any, res) => {
 });
 
 // 관심글 가져오는 api
-app.get("/mypage/list/interest", async (req: any, res) => {
-  const {userID} : {userID : string } = req.query;
+app.get('/mypage/list/interest', async (req: any, res) => {
+  const { userID }: { userID: string } = req.query;
   const interestedPost = await InterestedPosts.findAll({
     where: {
       userID: userID,
     },
-    include:{
+    include: {
       model: BookPost,
-      as: "interestedPost",
-    }
+      as: 'interestedPost',
+    },
   });
-  if(!interestedPost){
-    console.log('no interested posts')
+  if (!interestedPost) {
+    console.log('no interested posts');
     return;
   }
 
@@ -502,24 +600,24 @@ app.get("/mypage/list/interest", async (req: any, res) => {
 });
 
 // 구매목록 가져오는 api
-app.get("/mypage/list/purchase", async (req: any, res) => {
-  const {userID} : {userID : string } = req.query;
+app.get('/mypage/list/purchase', async (req: any, res) => {
+  const { userID }: { userID: string } = req.query;
   const purchasedBookpost = await BidOrder.findAll({
     where: {
       userID: userID,
-      isHighest : true,
+      isHighest: true,
     },
-    include:{
+    include: {
       model: BookPost,
-      as: "bookPost",
-      where:{
-        isActive : false,
+      as: 'bookPost',
+      where: {
+        isActive: false,
       },
     },
   });
 
-  if(!purchasedBookpost){
-    console.log('no purchased book posts')
+  if (!purchasedBookpost) {
+    console.log('no purchased book posts');
     return;
   }
 
@@ -527,31 +625,31 @@ app.get("/mypage/list/purchase", async (req: any, res) => {
 });
 
 // 입찰 참여 목록 가져오는 api
-app.get("/mypage/list/bid", async (req: any, res) => {
-  const {userID} : {userID : string } = req.query;
+app.get('/mypage/list/bid', async (req: any, res) => {
+  const { userID }: { userID: string } = req.query;
   const biddingBookpost = await BidOrder.findAll({
     where: {
       userID: userID,
     },
-    include:{
+    include: {
       model: BookPost,
-      as: "bookPost",
-      where:{
-        isActive : true,
+      as: 'bookPost',
+      where: {
+        isActive: true,
       },
-    }
+    },
   });
 
-  if(!biddingBookpost){
-    console.log('no bidded book posts')
+  if (!biddingBookpost) {
+    console.log('no bidded book posts');
     return;
   }
   res.send(biddingBookpost);
 });
 
 app.listen(port, () => {
-  console.log("backend server listen");
+  console.log('backend server listen');
 });
-app.get("/", async (req, res) => {
-  res.send("hello");
+app.get('/', async (req, res) => {
+  res.send('hello');
 });
