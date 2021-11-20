@@ -489,7 +489,7 @@ app.get("/mypage/list/interest", async (req: any, res) => {
     },
     include:{
       model: BookPost,
-      as: "interestedPosts",
+      as: "interestedPost",
     }
   });
   if(!interestedPost){
@@ -535,7 +535,7 @@ app.get("/mypage/list/bid", async (req: any, res) => {
     },
     include:{
       model: BookPost,
-      as: "bidBookPost",
+      as: "bookPost",
       where:{
         isActive : true,
       },
@@ -546,7 +546,6 @@ app.get("/mypage/list/bid", async (req: any, res) => {
     console.log('no bidded book posts')
     return;
   }
-
   res.send(biddingBookpost);
 });
 

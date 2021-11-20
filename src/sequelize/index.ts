@@ -364,7 +364,7 @@ const initSequelize = () => {
   });
   InterestedPosts.belongsTo(BookPost,{
     foreignKey: 'bookPostID',
-    as: 'interestedPosts',
+    as: 'interestedPost',
   });
   BidOrder.belongsTo(BookPost,{
     foreignKey: 'bookPostID',
