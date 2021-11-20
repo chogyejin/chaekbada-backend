@@ -338,7 +338,17 @@ app.post("/bookPost/write", async (req: any, res) => {
 
 // 최신순 bookPost
 app.get("/bookPostList/new", async (req: any, res) => {
+  const { isActive }: { isActive: string } = req.query;
+
+  const where = {};
+  if (isActive !== undefined) {
+    Object.assign(where, {
+      isActive: isActive === "true" ? true : false,
+    });
+  }
+
   const bookPosts = await BookPost.findAll({
+    where,
     order: [["createdAt", "DESC"]],
     include: [
       {
@@ -353,8 +363,17 @@ app.get("/bookPostList/new", async (req: any, res) => {
 
 // 관심 많은 글 = hottest
 app.get("/bookPostList/hot", async (req: any, res) => {
+  const { isActive }: { isActive: string } = req.query;
+
+  const where = {};
+  if (isActive !== undefined) {
+    Object.assign(where, {
+      isActive: isActive === "true" ? true : false,
+    });
+  }
+
   const bookPosts = await BookPost.findAll({
-    where: {},
+    where,
     include: {
       model: User,
       attributes: ["name"],
@@ -660,7 +679,7 @@ app.put("/buyImmediatelyBookPost", async (req: any, res) => {
   });
   await User.update(
     {
-      point:user.point -Number(bookPost.buyingItNowPrice),
+      point: user.point - Number(bookPost.buyingItNowPrice),
     },
     {
       where: {
