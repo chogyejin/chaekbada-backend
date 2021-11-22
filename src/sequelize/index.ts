@@ -358,22 +358,26 @@ const initSequelize = () => {
     foreignKey: 'userID',
     as: 'bookPostUserID',
   });
-  BookPost.belongsTo(User,{
-      foreignKey: 'userID',
-      as: 'user',
+  BookPost.belongsTo(User, {
+    foreignKey: 'userID',
+    as: 'user',
   });
-  InterestedPosts.belongsTo(BookPost,{
+  InterestedPosts.belongsTo(BookPost, {
     foreignKey: 'bookPostID',
     as: 'interestedPost',
   });
-  BidOrder.belongsTo(BookPost,{
+  BidOrder.belongsTo(BookPost, {
     foreignKey: 'bookPostID',
     as: 'bookPost',
   });
-  BookPost.hasMany(BidOrder,{
-    foreignKey:'bookPostID',
+  BookPost.hasMany(BidOrder, {
+    foreignKey: 'bookPostID',
     as: 'bidOrder',
-  })
+  });
+  Auth.belongsTo(User, {
+    foreignKey: 'userID',
+    as: 'user',
+  });
 };
 
 export { initSequelize };
