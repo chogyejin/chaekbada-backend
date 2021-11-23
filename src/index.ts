@@ -23,6 +23,7 @@ import crypto from 'crypto';
 import fetch from 'cross-fetch';
 import { Auth } from './sequelize/types/auth';
 import { isJSDocAuthorTag } from 'typescript';
+import { col } from 'sequelize/types';
 require('dotenv').config();
 
 const app = express();
@@ -784,6 +785,70 @@ app.get('/mypage/list/bid', async (req: any, res) => {
     return;
   }
   res.send(biddingBookpost);
+});
+
+//내정보 수정
+app.post('/mypage/modify/password', async (req: any, res) => {
+  const {
+    userID,
+    password,
+    newPassword,
+  }: { userID: string; password: string; newPassword: string } = req.query;
+  const user = await User.findOne({
+    where: { id: userID },
+  });
+
+  const saltRounds = 11;
+  const salt = bcrypt.genSaltSync(saltRounds);
+
+  if (user) {
+    if (user.isAuth == true) {
+      var check = await bcrypt.compare(password, user.password);
+      if (check) {
+        console.log('password 일치');
+        const hashedPassword = bcrypt.hashSync(newPassword, salt);
+        await User.update(
+          {
+            password: hashedPassword,
+          },
+          {
+            where: {
+              id: userID,
+            },
+          },
+        );
+        res.send(true);
+        return;
+      }
+      res.send(false);
+      return;
+    }
+  }
+  res.send(false);
+  return;
+});
+
+app.post('/mypage/modify/address', async (req: any, res) => {
+  const { userID, address }: { userID: string; address: string } = req.query;
+  const user = await User.findOne({
+    where: { id: userID },
+  });
+  if (!user) {
+    res.send(false);
+    return;
+  }
+  await User.update(
+    {
+      address: address,
+    },
+    {
+      where: {
+        id: userID,
+      },
+    },
+  );
+  res.send(true);
+  return;
 });
 
 app.listen(port, () => {
