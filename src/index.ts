@@ -425,7 +425,9 @@ app.get('/bookPost/post', async (req: any, res) => {
 
 // 찜
 app.post('/bookPost/post/interestedCount', async (req: any, res) => {
-  const { bookPostID }: { bookPostID: string } = req.query;
+  const { bookPostID, userID }: { bookPostID: string; userID: string } =
+    req.query;
+
   const bookPost = await BookPost.findOne({
     where: { id: bookPostID },
   });
@@ -434,11 +436,20 @@ app.post('/bookPost/post/interestedCount', async (req: any, res) => {
     return;
   }
 
+  const user = await User.findOne({
+    where: {
+      id: userID,
+    },
+  });
+  if (!user) {
+    return;
+  }
+
   //bookPost.interestedCounts;
   const interestedPosts = await InterestedPosts.findOne({
     where: {
       bookPostID: bookPost.id,
-      userID: bookPost.userID,
+      userID: user.id,
     },
   });
 
@@ -454,7 +465,7 @@ app.post('/bookPost/post/interestedCount', async (req: any, res) => {
       },
     );
     const interestedPosts = await InterestedPosts.create({
-      userID: bookPost.userID,
+      userID: userID,
       bookPostID: bookPost.id,
     });
     return;
@@ -474,7 +485,7 @@ app.post('/bookPost/post/interestedCount', async (req: any, res) => {
   await InterestedPosts.destroy({
     where: {
       bookPostID: bookPost.id,
-      userID: bookPost.userID,
+      userID: user.id,
     },
   });
 });
