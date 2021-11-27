@@ -29,7 +29,7 @@ require('dotenv').config();
 
 const app = express();
 const port = SERVER_PORT;
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { Client } = require('pg');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
