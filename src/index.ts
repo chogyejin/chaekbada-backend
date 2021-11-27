@@ -24,6 +24,7 @@ import fetch from 'cross-fetch';
 import { Auth } from './sequelize/types/auth';
 import { isJSDocAuthorTag } from 'typescript';
 import { col } from 'sequelize/types';
+
 require('dotenv').config();
 
 const app = express();
@@ -35,6 +36,7 @@ const jwt = require('jsonwebtoken');
 const sequelize = require('sequelize');
 const Op = sequelize.Op;
 const moment = require('moment');
+const schedule = require('node-schedule');
 
 const client = new Client({
   user: DB_USER,
@@ -849,6 +851,60 @@ app.post('/mypage/modify/address', async (req: any, res) => {
   );
   res.send(true);
   return;
+});
+
+const job = schedule.scheduleJob('59 59 23 * * *', async function () {
+  console.log('23:59:59 입찰마감 확인');
+  const now = new Date();
+  const bookPosts = await BookPost.findAll({
+    where: {
+      isActive: true,
+      endDate: {
+        [Op.lte]: now,
+      },
+    },
+    include: {
+      model: BidOrder,
+      as: 'bidOrder',
+    },
+  });
+  if (!bookPosts) {
+    return;
+  }
+
+  bookPosts.map(async (bookPost) => {
+    if (!bookPost.bidOrder?.isHighest) {
+      return;
+    }
+    const userID = bookPost.bidOrder.userID;
+    const user = await User.findOne({
+      where: { id: userID },
+    });
+    if (!user) {
+      return;
+    }
+    const point = user.point;
+    const biddingPoint = user.biddingPoint;
+    await User.update(
+      {
+        point: point - bookPost.bidOrder.point,
+        biddingPoint: biddingPoint - bookPost.bidOrder.point,
+      },
+      {
+        where: {
+          id: userID,
+        },
+      },
+    );
+    await BookPost.update(
+      {
+        isActive: false,
+      },
+      {
+        where: {},
+      },
+    );
+  });
 });
 
 app.listen(port, () => {

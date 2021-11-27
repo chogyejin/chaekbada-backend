@@ -1,4 +1,5 @@
 import { Model, Optional } from 'sequelize';
+import { BidOrder } from './bidorder';
 
 interface UsersAttributes {
   id: string;
@@ -35,6 +36,7 @@ class BookPost
   public bookImageUrl!: string;
   public isActive!: boolean;
   public thumbnail!: string;
+  public bidOrder!: BidOrder | undefined;
 
   // timestamps!
   public readonly createdAt!: Date;
