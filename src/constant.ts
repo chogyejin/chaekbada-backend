@@ -1,7 +1,7 @@
 export const IS_PRODUCTION =
   process.env.NODE_ENV === 'production' ? true : false;
 
-const SERVER_PORT = IS_PRODUCTION ? 8081 : 4000;
+const SERVER_PORT = IS_PRODUCTION ? 8080 : 4000;
 
 const DB_PORT = 5432;
 const DB_HOST = IS_PRODUCTION ? 'chaekbada.cfgblzfndycn.ap-northeast-2.rds.amazonaws.com' : '127.0.0.1';
